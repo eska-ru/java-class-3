@@ -1,5 +1,6 @@
 package lesson_2.server;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -12,10 +13,15 @@ public class Server {
     private final int PORT = 8189;
     private final List<ClientHandler> clients;
     private final AuthService authService;
+    private final HistoryService historyService;
+    private final WordFilter wordFilter;
 
-    public Server() throws ClassNotFoundException, SQLException {
+    public Server() throws ClassNotFoundException, SQLException, FileNotFoundException {
         clients = new CopyOnWriteArrayList<>();
         authService = new SqlAuthService();
+        historyService = new FileHistoryService();
+        wordFilter = new FileWordFilter();
+
         try {
             server = new ServerSocket(PORT);
             System.out.println("server started");
@@ -30,6 +36,7 @@ public class Server {
             e.printStackTrace();
         } finally {
             authService.close();
+            historyService.close();
             try {
                 server.close();
             } catch (IOException e) {
@@ -38,10 +45,18 @@ public class Server {
         }
     }
 
-    public void broadcastMsg(ClientHandler sender, String msg){
+    public void broadcastMsg(ClientHandler sender, String msg) {
+        msg = wordFilter.validateSentence(msg);
+
         String message = String.format("[ %s ] : %s", sender.getNickname(), msg);
         for (ClientHandler c : clients) {
             c.sendMsg(message);
+        }
+
+        try {
+            historyService.addMessage(message);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -66,6 +81,16 @@ public class Server {
         }
 
         return null;
+    }
+
+    public void sendHistory(ClientHandler clientHandler) {
+        try {
+            for (String lastMessage : historyService.getLastMessages(100)) {
+                clientHandler.sendMsg(lastMessage);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void subscribe(ClientHandler clientHandler){
