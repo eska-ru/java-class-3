@@ -44,4 +44,9 @@ public class SimpleAuthService implements AuthService {
     public boolean tryToChangeNickname(String nickname, String newNickname) {
         return false;
     }
+
+    @Override
+    public void close() {
+
+    }
 }

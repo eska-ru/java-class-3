@@ -9,7 +9,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Server {
     private ServerSocket server;
-    private Socket socket;
     private final int PORT = 8189;
     private final List<ClientHandler> clients;
     private final AuthService authService;
@@ -22,7 +21,7 @@ public class Server {
             System.out.println("server started");
 
             while (true) {
-                socket = server.accept();
+                Socket socket = server.accept();
                 System.out.println("client connected" + socket.getRemoteSocketAddress());
                 new ClientHandler(this, socket);
             }
@@ -30,6 +29,7 @@ public class Server {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
+            authService.close();
             try {
                 server.close();
             } catch (IOException e) {
