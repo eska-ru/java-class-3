@@ -41,6 +41,7 @@ public class ClientHandler {
                                     nickname = newNick;
                                     sendMsg(Command.AUTH_OK + " " + nickname);
                                     server.subscribe(this);
+                                    server.sendHistory(this);
                                     break;
                                 } else {
                                     sendMsg("Неверный логин / пароль");
